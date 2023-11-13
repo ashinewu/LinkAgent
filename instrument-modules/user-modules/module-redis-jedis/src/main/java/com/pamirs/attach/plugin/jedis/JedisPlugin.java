@@ -37,7 +37,6 @@ public class JedisPlugin extends ModuleLifecycleAdapter implements ExtensionModu
 
     @Override
     public boolean onActive() {
-
         EnhanceCallback jedisEnhanceCallback = new EnhanceCallback() {
             @Override
             public void doEnhance(InstrumentClass target) {
@@ -93,6 +92,7 @@ public class JedisPlugin extends ModuleLifecycleAdapter implements ExtensionModu
         };
         //redis.clients.jedis.PipelineBase
         enhanceTemplate.enhanceWithSuperClass(this, "redis.clients.jedis.PipelineBase", pipelineCallback);
+
         enhanceTemplate.enhance(this, "redis.clients.jedis.PipelineBase", pipelineCallback);
 
 
@@ -152,7 +152,7 @@ public class JedisPlugin extends ModuleLifecycleAdapter implements ExtensionModu
             @Override
             public void doEnhance(InstrumentClass target) {
                 InstrumentMethod sendCommand = target.getDeclaredMethods("sendCommand");
-                sendCommand.addInterceptor(Listeners.of(JedisConnectionSendCommandTraceInterceptor.class));
+                sendCommand.addInterceptor(Listeners.of(JedisConnectionSendCommandTraceInterceptor.class, "JEDIS_COMMAND_TRACE_SCOPE", ExecutionPolicy.BOUNDARY, Interceptors.SCOPE_CALLBACK));
                 sendCommand.addInterceptor(Listeners.of(JedisConnectionSendCommandInterceptor.class));
                 sendCommand.addInterceptor(Listeners.of(JedisSingleClientCutOffInterceptor.class));
             }

@@ -14,14 +14,14 @@
  */
 package com.pamirs.pradar;
 
-import cn.chinaunicom.pinpoint.thrift.dto.TStressTestTraceData;
-import cn.chinaunicom.pinpoint.thrift.dto.TStressTestTracePayloadData;
-import com.alibaba.fastjson.JSON;
 import com.pamirs.attach.plugin.dynamic.Attachment;
 import com.pamirs.attach.plugin.dynamic.Converter;
 import com.pamirs.attach.plugin.dynamic.ResourceManager;
+import com.pamirs.pradar.gson.GsonFactory;
 import com.pamirs.pradar.json.ResultSerializer;
 import com.shulie.instrument.simulator.api.util.StringUtil;
+import io.shulie.takin.pinpoint.thrift.dto.TStressTestTraceData;
+import io.shulie.takin.pinpoint.thrift.dto.TStressTestTracePayloadData;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
@@ -82,7 +82,7 @@ class TraceInvokeContextEncoder extends TraceEncoder {
                         ResultSerializer.serializeRequest(ctx.getRequest() == null ? "" : ctx.getRequest(),
                                 Pradar.getPluginRequestSize()))).append('|')
                 .append(PradarCoreUtils.makeLogSafe(
-                        ResultSerializer.serializeRequest(ctx.getMockResponse() != null ? ctx.getMockResponse() : ctx.getResponse() != null ? ctx.getResponse() : "" ,
+                        ResultSerializer.serializeRequest(ctx.getMockResponse() != null ? ctx.getMockResponse() : ctx.getResponse() != null ? ctx.getResponse() : "",
                                 Pradar.getPluginRequestSize()))).append('|')
                 .append(TraceCoreUtils.combineString(ctx.isClusterTest(), ctx.isDebug(),
                         "0".equals(ctx.invokeId),
@@ -121,7 +121,7 @@ class TraceInvokeContextEncoder extends TraceEncoder {
                             .ofClass(
                                     attachment.getExt().getClass()
                             ).getKey();
-                    ctx.ext = key + "@##" + JSON.toJSONString(attachment);
+                    ctx.ext = key + "@##" + GsonFactory.getGson().toJson(attachment);
                 }
                 return;
             }
@@ -157,7 +157,7 @@ class TraceInvokeContextEncoder extends TraceEncoder {
                         .ofClass(
                                 attachment.getExt().getClass()
                         ).getKey();
-                ctx.ext = key + "@##" + JSON.toJSONString(ctx.ext);
+                ctx.ext = key + "@##" + GsonFactory.getGson().toJson(ctx.ext);
             }
         } catch (Throwable t) {
 
@@ -247,8 +247,12 @@ class TraceCollectorInvokeEncoder extends TraceEncoder {
         traceData.setServer(TraceCoreUtils.isServer(ctx));
         traceData.setUpAppName(ctx.upAppName);
         traceData.setRemoteIp(ctx.remoteIp);
-        traceData.setPort(StringUtils.isBlank(ctx.getPort()) ? 0 : Integer.parseInt(ctx.getPort()));
-        if (ctx.attributes != null && ctx.attributes.containsKey(PradarService.PRADAR_TRACE_NODE_KEY)){
+        try {
+            traceData.setPort(StringUtils.isBlank(ctx.getPort()) ? 0 : Integer.parseInt(ctx.getPort()));
+        } catch (Exception e) {
+            traceData.setPort(0);
+        }
+        if (ctx.attributes != null && ctx.attributes.containsKey(PradarService.PRADAR_TRACE_NODE_KEY)) {
             traceData.setEntranceId(ctx.attributes.get(PradarService.PRADAR_TRACE_NODE_KEY));
         }
 
@@ -297,7 +301,7 @@ class TraceCollectorInvokeEncoder extends TraceEncoder {
                             .ofClass(
                                     attachment.getExt().getClass()
                             ).getKey();
-                    ctx.ext = key + "@##" + JSON.toJSONString(attachment);
+                    ctx.ext = key + "@##" + GsonFactory.getGson().toJson(attachment);
                 }
                 return;
             }
@@ -333,7 +337,7 @@ class TraceCollectorInvokeEncoder extends TraceEncoder {
                         .ofClass(
                                 attachment.getExt().getClass()
                         ).getKey();
-                ctx.ext = key + "@##" + JSON.toJSONString(ctx.ext);
+                ctx.ext = key + "@##" + GsonFactory.getGson().toJson(ctx.ext);
             }
         } catch (Throwable t) {
 
